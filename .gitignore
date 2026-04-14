@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+build/
+install/
+log/
+diffusion_vla/diffusion_policy_output/*.pt

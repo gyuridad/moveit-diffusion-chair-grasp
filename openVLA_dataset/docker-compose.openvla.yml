@@ -1,0 +1,49 @@
+services:
+  openvla-lora:
+    build:
+      context: /home/lst7910/isaac_ros2_ws/IsaacSim-ros_workspaces/humble_ws
+      dockerfile: src/robotarm_project/openVLA_dataset/Dockerfile.openvla
+    image: openvla-lora:latest
+    container_name: openvla-lora
+    working_dir: /workspace/openvla
+    stdin_open: true
+    tty: true
+    shm_size: "16gb"
+    environment:
+      HF_HOME: /root/.cache/huggingface
+      TRANSFORMERS_CACHE: /root/.cache/huggingface/transformers
+      WANDB_PROJECT: openvla-chair-grasp
+      WANDB_MODE: offline
+      PYTHONNOUSERSITE: "1"
+    volumes:
+      - /home/lst7910/isaac_ros2_ws/IsaacSim-ros_workspaces/humble_ws/src/robotarm_project/openVLA_dataset/tfds_out:/data/tfds_out
+      - /home/lst7910/isaac_ros2_ws/IsaacSim-ros_workspaces/humble_ws/src/robotarm_project/openvla/runs:/workspace/openvla/runs
+      - /home/lst7910/isaac_ros2_ws/IsaacSim-ros_workspaces/humble_ws/src/robotarm_project/openvla/adapter_tmp:/workspace/openvla/adapter_tmp
+      - /home/lst7910/.cache/huggingface:/root/.cache/huggingface
+      - /home/lst7910/isaac_ros2_ws/IsaacSim-ros_workspaces/humble_ws/src/robotarm_project/openVLA_dataset:/workspace/openVLA_dataset
+      - /home/lst7910/isaac_ros2_ws/IsaacSim-ros_workspaces/humble_ws/src/robotarm_project/debug_runs:/workspace/debug_runs
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    command: >
+      bash -lc "
+      torchrun --standalone --nnodes 1 --nproc-per-node 1 vla-scripts/finetune.py
+      --vla_path openvla/openvla-7b
+      --data_root_dir /data/tfds_out
+      --dataset_name custom_open_vla_rlds
+      --run_root_dir /workspace/openvla/runs/custom_open_vla_rlds
+      --adapter_tmp_dir /workspace/openvla/adapter_tmp/custom_open_vla_rlds
+      --lora_rank 16
+      --batch_size 1
+      --grad_accumulation_steps 16
+      --learning_rate 2e-4
+      --image_aug False
+      --save_steps 50
+      --max_steps 300
+      --wandb_project ${WANDB_PROJECT:-openvla-chair-grasp}
+      "
+ 

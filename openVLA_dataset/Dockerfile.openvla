@@ -1,0 +1,71 @@
+FROM pytorch/pytorch:2.2.0-cuda12.1-cudnn8-runtime
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONUNBUFFERED=1 \
+    PYTHONNOUSERSITE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    HF_HOME=/root/.cache/huggingface \
+    TRANSFORMERS_CACHE=/root/.cache/huggingface/transformers
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    git-lfs \
+    ffmpeg \
+    libgl1 \
+    libglib2.0-0 \
+    build-essential \
+    ninja-build \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /opt
+
+# Install pinned dependencies first so OpenVLA does not pull in incompatible versions.
+RUN pip install --upgrade pip setuptools wheel && \
+    pip install \
+      "numpy==1.26.4" \
+      "tensorflow==2.15.0" \
+      "tensorflow_datasets==4.9.3" \
+      "tensorflow_graphics==2021.12.3" \
+      "accelerate==0.31.0" \
+      "huggingface-hub==0.23.4" \
+      "safetensors>=0.3.1,<1" \
+      "timm==0.9.10" \
+      "tokenizers==0.19.1" \
+      "transformers==4.40.1" \
+      "peft==0.11.1" \
+      "sentencepiece==0.1.99" \
+      "draccus==0.8.0" \
+      "wandb" \
+      "json-numpy" \
+      "jsonlines" \
+      "matplotlib" \
+      "rich" \
+      "einops" \
+      "protobuf" \
+      "wrapt" \
+      "cycler" \
+      "fonttools" \
+      "kiwisolver" \
+      "pyparsing" \
+      "pytz" \
+      "tqdm" \
+      "psutil" \
+      "scipy" \
+      "decorator" \
+      "exceptiongroup"
+
+RUN pip install "dlimp @ git+https://github.com/moojink/dlimp_openvla"
+
+# Copy the repo snapshot with your custom dataset registration.
+COPY src/robotarm_project/openvla /workspace/openvla
+COPY src/robotarm_project/openVLA_dataset /workspace/openVLA_dataset
+
+WORKDIR /workspace/openvla
+RUN pip install -e . --no-deps
+
+# Optional but recommended for training speed.
+RUN pip install packaging ninja && \
+    pip install "flash-attn==2.5.5" --no-build-isolation || true
+
+CMD ["/bin/bash"]

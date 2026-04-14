@@ -1,0 +1,22 @@
+{
+  "dataset_type": "diffusion_vla_stream",
+  "instruction_text": "의자를 집어",
+  "rgb_topic": "/hand_Camera_rgb",
+  "joint_state_topic": "/joint_states",
+  "joint_command_topic": "/joint_command",
+  "phase_layout": [
+    "pre_grasp",
+    "approach_far",
+    "approach_mid",
+    "approach_near",
+    "contact_ready",
+    "close",
+    "lift"
+  ],
+  "approach_offset": 0.2,
+  "approach_mid_offset": 0.14,
+  "approach_near_offset": 0.08,
+  "contact_ready_offset": 0.04,
+  "goal_xy_jitter_m": 0.0,
+  "goal_z_jitter_m": 0.0
+}
